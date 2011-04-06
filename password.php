@@ -99,7 +99,7 @@ class PasswordHash
 
 		unset ($matches);
 
-		$repetitions = pow(2, $workload);
+		$repetitions = pow(2, $workload + 3); // Increase the workload since PBKDF2 is faster than blowfish
 		$output = '';
 
 		for ($block = 0;$block < $key_blocks;$block++)
