@@ -7,8 +7,6 @@
 
 class PasswordHash
 {
-	const HASH_ALGO = 'sha256';
-
 	/**
 	 * Fetches random data from a secure source if possible -
 	 * /dev/urandom on UNIX systems. Falls back to mt_rand()
@@ -74,10 +72,11 @@ class PasswordHash
 	}
 
 	/**
-	 * Repeatedly hashes the given password according to the parameters
-	 * in our custom salt. Salt takes the form $F$<cost>$<salt> where
-	 * the cost is a 2 digit cost parameter, and the salt is a 22 digit
-	 * salt using the alphabet ./0-9A-Za-z.
+	 * Hashes the given password using PBKDF2.
+	 * Salt takes the form $F$<cost>$<blocks>$<salt> where the cost is a 2 digit
+	 * cost parameter, blocks is a 1 digit number defining how long the key should
+	 * be (block * 32) bytes, and the salt is a 22 digit salt using the alphabet
+	 * ./0-9A-Za-z.
 	 *
 	 * @param string $str
 	 * 		The password to hash.
@@ -88,24 +87,35 @@ class PasswordHash
 	 * @return string
 	 * 		The hashed string, including the original salt.
 	 */
-	private static function repeated_hash($str, $salt)
+	private static function pbkdf2($str, $salt)
 	{
 		// Check if the given salt is valid or not
-		if (!preg_match('%\$F\$(\d{2})\$([a-zA-Z0-9\./]{22})(.*)$%', $salt, $matches))
+		if (!preg_match('%\$F\$(\d{2})\$(\d)\$([a-zA-Z0-9\./]{22})(.*)$%', $salt, $matches))
 			return null;
 
-		$workload = $matches[1] + 4; // Increase the workload since the custom hash is much faster than blowfish
-		$salt = $matches[2];
+		$workload = $matches[1];
+		$key_blocks = $matches[2];
+		$salt = $matches[3];
 
 		unset ($matches);
 
-		// Hash the input depending on the workload
 		$repetitions = pow(2, $workload);
-		for ($i = 0;$i < $repetitions;$i++)
-			$str = hash(self::HASH_ALGO, $salt.$str, true);
+		$output = '';
+
+		for ($block = 0;$block < $key_blocks;$block++)
+		{
+			// Initial hash for this block
+			$ib = $b = hash_hmac('sha256', $salt.pack('N', $block), $str, true);
+
+			// Perform block iterations
+			for ($i = 0;$i < $repetitions;$i++)
+				$ib ^= ($b = hash_hmac('sha256', $b, $str, true));
+
+			$output .= $ib;
+		}
 
 		// Return the salt + hash
-		return '$F$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$'.$salt.self::base64_encode($str);
+		return '$F$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$'.$key_blocks.'$'.$salt.self::base64_encode($output);
 	}
 
 	/**
@@ -139,8 +149,8 @@ class PasswordHash
 		if (CRYPT_BLOWFISH === 1)
 			return crypt($str, '$2a$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$'.$salt);
 
-		// Fallback to repeated hashing
-		return self::repeated_hash($str, '$F$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$'.$salt);
+		// Fall back to PBKDF2
+		return self::pbkdf2($str, '$F$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$1$'.$salt);
 	}
 
 	/**
@@ -159,7 +169,7 @@ class PasswordHash
 	public static function validate($str, $hash)
 	{
 		// First try the fall back method, then crypt
-		$answer = self::repeated_hash($str, $hash);
+		$answer = self::pbkdf2($str, $hash);
 		if ($answer === null)
 			$answer = crypt($str, $hash);
 
