@@ -54,6 +54,22 @@ class PasswordHash
 	}
 
 	/**
+	 * Generates a random key using the alphabet ./0-9A-Za-z.
+	 *
+	 * @param string $length
+	 * 		Length of the string to generate.
+	 *
+	 * @return string
+	 * 		The generated random string.
+	 */
+	public static function random_key($length)
+	{
+		$bytes = ceil($length / 1.33);
+		$key = self::base64_encode(self::random_bytes($bytes, true));
+		return substr($key, 0, $length);
+	}
+
+	/**
 	 * Encodes data in base64 using the alphabet ./0-9A-Za-z.
 	 *
 	 * @param string $str
