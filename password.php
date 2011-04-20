@@ -25,32 +25,37 @@ class PasswordHash
 	 */
 	public static function random_bytes($length, $raw_output = false)
 	{
-		$data = '';
-
-		// On a UNIX system use /dev/urandom
-		if (is_readable('/dev/urandom'))
+		if (function_exists('openssl_random_pseudo_bytes'))
+			$data = openssl_random_pseudo_bytes($length);
+		else
 		{
-			$handle = @fopen('/dev/urandom', 'rb');
-			if ($handle !== false)
+			$data = '';
+
+			// On a UNIX system use /dev/urandom
+			if (is_readable('/dev/urandom'))
 			{
-				$data = fread($handle, $length);
-				fclose($handle);
+				$handle = @fopen('/dev/urandom', 'rb');
+				if ($handle !== false)
+				{
+					$data = fread($handle, $length);
+					fclose($handle);
+				}
 			}
+
+			// Fall back to using md_rand() - not cryptographically secure, but available everywhere
+			while (strlen($data) < $length)
+				$data .= pack('i', mt_rand());
+
+			if (strlen($data) > $length)
+				$data = substr($data, 0, $length);
 		}
-
-		// Fall back to using md_rand() - not cryptographically secure, but available everywhere
-		while (strlen($data) < $length)
-			$data .= pack('i', mt_rand());
-
-		if (strlen($data) > $length)
-			$data = substr($data, 0, $length);
 
 		// If requested return the raw output
 		if ($raw_output)
 			return $data;
 
 		// Otherwise return the data as a hex string
-		return current(unpack('H*', $data));
+		return bin2hex($data);
 	}
 
 	/**
