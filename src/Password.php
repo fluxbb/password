@@ -5,7 +5,7 @@
 * License: LGPL - GNU Lesser General Public License (http://www.gnu.org/licenses/lgpl.html)
 */
 
-class PasswordHash
+class Flux_Password
 {
 	/**
 	 * Fetches random data from a secure source if possible -
@@ -23,7 +23,7 @@ class PasswordHash
 	 * @return string
 	 * 		The random data.
 	 */
-	public static function random_bytes($length, $raw_output = false)
+	public static function randomBytes($length, $raw_output = false)
 	{
 		if (function_exists('openssl_random_pseudo_bytes'))
 			$data = openssl_random_pseudo_bytes($length);
@@ -67,10 +67,10 @@ class PasswordHash
 	 * @return string
 	 * 		The generated random string.
 	 */
-	public static function random_key($length)
+	public static function randomKey($length)
 	{
 		$bytes = ceil($length / 1.33);
-		$key = self::base64_encode(self::random_bytes($bytes, true));
+		$key = self::base64Encode(self::randomBytes($bytes, true));
 		return substr($key, 0, $length);
 	}
 
@@ -83,7 +83,7 @@ class PasswordHash
 	 * @return string
 	 * 		The encoded data, as a string.
 	 */
-	private static function base64_encode($str)
+	private static function base64Encode($str)
 	{
 		$from	= 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
 		$to		= './0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -163,8 +163,8 @@ class PasswordHash
 			$workload = 31;
 
 		// Generate a random salt and base64 encode it
-		$salt = self::random_bytes(16, true);
-		$salt = self::base64_encode($salt);
+		$salt = self::randomBytes(16, true);
+		$salt = self::base64Encode($salt);
 
 		// If we have blowfish, use it
 		if (CRYPT_BLOWFISH === 1)
