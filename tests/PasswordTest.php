@@ -16,10 +16,12 @@ class Flux_PasswordTest extends PHPUnit_Framework_TestCase
 	{
 		// Raw data should be the same length as requested
 		$data = Flux_Password::randomBytes(20, true);
+		
 		$this->assertEquals(strlen($data), 20);
 	
 		// Hex data should be 2x the requested length
 		$data = Flux_Password::randomBytes(20, false);
+		
 		$this->assertEquals(strlen($data), 40);
 	}
 	
@@ -35,6 +37,7 @@ class Flux_PasswordTest extends PHPUnit_Framework_TestCase
 	{
 		// A key should be the same length as requested
 		$key = Flux_Password::randomKey(20);
+		
 		$this->assertEquals(strlen($key), 20);
 	}
 	
