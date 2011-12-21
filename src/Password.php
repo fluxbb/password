@@ -25,32 +25,40 @@ class Flux_Password
 	 */
 	public static function randomBytes($length, $raw_output = false)
 	{
-		if (function_exists('openssl_random_pseudo_bytes')) {
+		if (function_exists('openssl_random_pseudo_bytes'))
+		{
 			$data = openssl_random_pseudo_bytes($length);
-		} else {
+		}
+		else
+		{
 			$data = '';
 
 			// On a UNIX system use /dev/urandom
-			if (is_readable('/dev/urandom')) {
+			if (is_readable('/dev/urandom'))
+			{
 				$handle = @fopen('/dev/urandom', 'rb');
-				if ($handle !== false) {
+				if ($handle !== false)
+				{
 					$data = fread($handle, $length);
 					fclose($handle);
 				}
 			}
 
 			// Fall back to using md_rand() - not cryptographically secure, but available everywhere
-			while (strlen($data) < $length) {
+			while (strlen($data) < $length)
+			{
 				$data .= pack('i', mt_rand());
 			}
 
-			if (strlen($data) > $length) {
+			if (strlen($data) > $length)
+			{
 				$data = substr($data, 0, $length);
 			}
 		}
 
 		// If requested return the raw output
-		if ($raw_output) {
+		if ($raw_output)
+		{
 			return $data;
 		}
 
@@ -111,7 +119,8 @@ class Flux_Password
 	private static function pbkdf2($str, $salt)
 	{
 		// Check if the given salt is valid or not
-		if (!preg_match('%\$F\$(\d{2})\$(\d)\$([a-zA-Z0-9\./]{22})(.*)$%', $salt, $matches)) {
+		if (!preg_match('%\$F\$(\d{2})\$(\d)\$([a-zA-Z0-9\./]{22})(.*)$%', $salt, $matches))
+		{
 			return null;
 		}
 
@@ -124,12 +133,14 @@ class Flux_Password
 		$repetitions = pow(2, $workload + 3); // Increase the workload since PBKDF2 is faster than blowfish
 		$output = '';
 
-		for ($block = 0;$block < $key_blocks;$block++) {
+		for ($block = 0;$block < $key_blocks;$block++)
+		{
 			// Initial hash for this block
 			$ib = $b = hash_hmac('sha256', $salt.pack('N', $block), $str, true);
 
 			// Perform block iterations
-			for ($i = 0;$i < $repetitions;$i++) {
+			for ($i = 0;$i < $repetitions;$i++)
+			{
 				$ib ^= ($b = hash_hmac('sha256', $b, $str, true));
 			}
 
@@ -157,11 +168,13 @@ class Flux_Password
 	public static function hash($str, $workload = 8)
 	{
 		// Validate the workload is within sensible bounds
-		if ($workload < 4) {
+		if ($workload < 4)
+		{
 			$workload = 4;
 		}
 
-		if ($workload > 31) {
+		if ($workload > 31)
+		{
 			$workload = 31;
 		}
 
@@ -170,7 +183,8 @@ class Flux_Password
 		$salt = self::base64Encode($salt);
 
 		// If we have blowfish, use it
-		if (CRYPT_BLOWFISH === 1) {
+		if (CRYPT_BLOWFISH === 1)
+		{
 			return crypt($str, '$2a$'.str_pad($workload, 2, '0', STR_PAD_LEFT).'$'.$salt);
 		}
 
@@ -195,7 +209,8 @@ class Flux_Password
 	{
 		// First try the fall back method, then crypt
 		$answer = self::pbkdf2($str, $hash);
-		if ($answer === null) {
+		if ($answer === null)
+		{
 			$answer = crypt($str, $hash);
 		}
 
