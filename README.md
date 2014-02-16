@@ -1,4 +1,4 @@
-# fluxbb-password ![Build status](https://secure.travis-ci.org/fluxbb/password.png?branch=master)
+# fluxbb-password [![Build status](https://secure.travis-ci.org/fluxbb/password.png?branch=master)](https://travis-ci.org/fluxbb/password)
 A password class for securely hashing passwords using blowfish with fallback to repeated hashing.
 
 License: [LGPL - GNU Lesser General Public License](http://www.gnu.org/licenses/lgpl.html)
